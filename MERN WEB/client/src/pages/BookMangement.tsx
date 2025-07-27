@@ -10,13 +10,22 @@ import {
   updateBook,
   deleteBook,
 } from "../services/bookService";
-
 import { getCategories } from "../services/categoryService";
+import Loading from "../components/PageLoading";
 
 const BookManagement: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterCategoryId, setFilterCategoryId] = useState("All");
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [deleteModal, setDeleteModal] = useState<{
+    show: boolean;
+    id: string | null;
+  }>({ show: false, id: null });
 
   const [formData, setFormData] = useState<BookFormData>({
     title: "",
@@ -27,12 +36,9 @@ const BookManagement: React.FC = () => {
     availableCopies: 1,
   });
 
-  const [isAdding, setIsAdding] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterCategoryId, setFilterCategoryId] = useState("All");
-
   const fetchBooksAndCategories = async () => {
     try {
+      setLoading(true);
       const categoriesData = await getCategories();
       setCategories(categoriesData);
 
@@ -49,6 +55,8 @@ const BookManagement: React.FC = () => {
     } catch (error) {
       toast.error("Failed to load books or categories");
       console.error(error);
+    }finally{
+      setLoading(false);
     }
   };
 
@@ -56,10 +64,13 @@ const BookManagement: React.FC = () => {
     fetchBooksAndCategories();
   }, []);
 
+
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+    setErrors((prev) => ({ ...prev, [name]: "" })); // clear error
     if (name === "totalCopies") {
       const total = Number(value);
       setFormData((prev) => ({
@@ -84,16 +95,29 @@ const BookManagement: React.FC = () => {
       totalCopies: 1,
       availableCopies: 1,
     });
+    setErrors({});
+  };
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+    if (!formData.title.trim()) newErrors.title = "Title is required.";
+    if (!formData.author.trim()) newErrors.author = "Author is required.";
+    if (!formData.isbn.trim()) newErrors.isbn = "ISBN is required.";
+    if (!formData.category) newErrors.category = "Category is required.";
+    if (formData.totalCopies < 1)
+      newErrors.totalCopies = "Must be at least 1 copy.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleAddBook = async () => {
-    const { title, author, isbn, category, totalCopies } = formData;
-    if (!title.trim() || !author.trim() || !isbn.trim() || !category || totalCopies < 1) {
-      toast.error("Please fill all fields correctly");
-      return;
-    }
+    if (!validateForm()) return;
     try {
-      const toCreate = { ...formData, availableCopies: totalCopies };
+      const toCreate = {
+        ...formData,
+        availableCopies: formData.totalCopies,
+      };
       const newBook = await createBook(toCreate);
       setBooks((prev) => [...prev, newBook]);
       toast.success("Book added");
@@ -116,6 +140,7 @@ const BookManagement: React.FC = () => {
       availableCopies: book.availableCopies,
     });
     setIsAdding(false);
+    setErrors({});
   };
 
   const cancelEditing = () => {
@@ -124,11 +149,7 @@ const BookManagement: React.FC = () => {
   };
 
   const saveEditing = async (id: string) => {
-    const { title, author, isbn, category, totalCopies, availableCopies } = formData;
-    if (!title.trim() || !author.trim() || !isbn.trim() || !category || totalCopies < 1 || availableCopies < 0) {
-      toast.error("Please fill all fields correctly");
-      return;
-    }
+    if (!validateForm()) return;
     try {
       const updatedBook = await updateBook(id, formData);
       setBooks((prev) => prev.map((b) => (b._id === id ? updatedBook : b)));
@@ -138,18 +159,6 @@ const BookManagement: React.FC = () => {
       resetForm();
     } catch (error) {
       toast.error("Failed to update book");
-      console.error(error);
-    }
-  };
-
-  const handleDeleteBook = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this book?")) return;
-    try {
-      await deleteBook(id);
-      setBooks((prev) => prev.filter((b) => b._id !== id));
-      toast.success("Book deleted");
-    } catch (error) {
-      toast.error("Failed to delete book");
       console.error(error);
     }
   };
@@ -171,6 +180,12 @@ const BookManagement: React.FC = () => {
     const category = categories.find((c) => c._id === categoryId);
     return category ? category.name : "";
   };
+
+  if (loading) {
+    return (
+     <Loading/>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white rounded-2xl shadow-lg mt-8">
@@ -203,67 +218,48 @@ const BookManagement: React.FC = () => {
         </select>
       </div>
 
-      {!isAdding && editingId === null && (
-        <button
-          onClick={() => {
-            resetForm();
-            setIsAdding(true);
-          }}
-          className="mb-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 shadow"
-        >
-          + Add New Book
-        </button>
-      )}
-
+      {/* Add/Edit Form */}
       {(isAdding || editingId !== null) && (
         <div className="mb-8 p-6 border border-white/20 rounded bg-white/5">
           <h2 className="text-xl font-semibold mb-4 text-indigo-300">
             {editingId ? "Edit Book" : "Add New Book"}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              name="title"
-              placeholder="Title"
-              value={formData.title}
-              onChange={handleChange}
-              className="p-2 border border-white/20 rounded bg-white/10 text-white"
-            />
-            <input
-              name="author"
-              placeholder="Author"
-              value={formData.author}
-              onChange={handleChange}
-              className="p-2 border border-white/20 rounded bg-white/10 text-white"
-            />
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              className="p-2 border border-white/20 rounded bg-white/10 text-white"
-            >
-              {categories.map((cat) => (
-                <option key={cat._id} value={cat._id} className="text-black">
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-            <input
-              name="isbn"
-              placeholder="ISBN"
-              value={formData.isbn}
-              onChange={handleChange}
-              className="p-2 border border-white/20 rounded bg-white/10 text-white"
-            />
-            <input
-              type="number"
-              name="totalCopies"
-              min={1}
-              placeholder="Total Copies"
-              value={formData.totalCopies}
-              onChange={handleChange}
-              className="p-2 border border-white/20 rounded bg-white/10 text-white"
-            />
+            {["title", "author", "isbn", "totalCopies"].map((field) => (
+              <div key={field}>
+                <input
+                  name={field}
+                  placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                  type={field === "totalCopies" ? "number" : "text"}
+                  value={formData[field as keyof BookFormData]}
+                  onChange={handleChange}
+                  min={field === "totalCopies" ? 1 : undefined}
+                  className="p-2 border border-white/20 rounded bg-white/10 text-white w-full"
+                />
+                {errors[field] && (
+                  <p className="text-red-400 text-sm mt-1">{errors[field]}</p>
+                )}
+              </div>
+            ))}
+            <div>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="p-2 border border-white/20 rounded bg-white/10 text-white w-full"
+              >
+                {categories.map((cat) => (
+                  <option key={cat._id} value={cat._id} className="text-black">
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              {errors.category && (
+                <p className="text-red-400 text-sm mt-1">{errors.category}</p>
+              )}
+            </div>
           </div>
+
           <div className="flex space-x-4 mt-4">
             {editingId ? (
               <>
@@ -303,6 +299,18 @@ const BookManagement: React.FC = () => {
         </div>
       )}
 
+      {!isAdding && editingId === null && (
+        <button
+          onClick={() => {
+            resetForm();
+            setIsAdding(true);
+          }}
+          className="mb-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 shadow"
+        >
+          + Add New Book
+        </button>
+      )}
+
       <div className="overflow-x-auto rounded shadow-lg">
         {filteredBooks.length === 0 ? (
           <p className="p-6 text-center text-gray-300">No books found.</p>
@@ -319,100 +327,73 @@ const BookManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredBooks.map((book) =>
-                editingId === book._id ? (
-                  <tr key={book._id} className="bg-yellow-50 text-black">
-                    <td className="border px-4 py-2">
-                      <input
-                        name="title"
-                        value={formData.title}
-                        onChange={handleChange}
-                        className="w-full p-1 border rounded"
-                      />
-                    </td>
-                    <td className="border px-4 py-2">
-                      <input
-                        name="author"
-                        value={formData.author}
-                        onChange={handleChange}
-                        className="w-full p-1 border rounded"
-                      />
-                    </td>
-                    <td className="border px-4 py-2">
-                      <select
-                        name="category"
-                        value={formData.category}
-                        onChange={handleChange}
-                        className="w-full p-1 border rounded"
-                      >
-                        {categories.map((cat) => (
-                          <option key={cat._id} value={cat._id}>
-                            {cat.name}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="border px-4 py-2">
-                      <input
-                        name="isbn"
-                        value={formData.isbn}
-                        onChange={handleChange}
-                        className="w-full p-1 border rounded"
-                      />
-                    </td>
-                    <td className="border px-4 py-2">
-                      <input
-                        name="totalCopies"
-                        type="number"
-                        min={1}
-                        value={formData.totalCopies}
-                        onChange={handleChange}
-                        className="w-full p-1 border rounded"
-                      />
-                    </td>
-                    <td className="border px-4 py-2 space-x-2">
-                      <button
-                        onClick={() => saveEditing(book._id)}
-                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={cancelEditing}
-                        className="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500"
-                      >
-                        Cancel
-                      </button>
-                    </td>
-                  </tr>
-                ) : (
-                  <tr key={book._id} className="hover:bg-white/5 transition">
-                    <td className="border border-white/10 px-4 py-2">{book.title}</td>
-                    <td className="border border-white/10 px-4 py-2">{book.author}</td>
-                    <td className="border border-white/10 px-4 py-2">{getCategoryName(book.category._id)}</td>
-                    <td className="border border-white/10 px-4 py-2">{book.isbn}</td>
-                    <td className="border border-white/10 px-4 py-2">{book.totalCopies}</td>
-                    <td className="border border-white/10 px-4 py-2 space-x-2">
-                      <button
-                        onClick={() => startEditing(book)}
-                        className="bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteBook(book._id)}
-                        className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                )
-              )}
+              {filteredBooks.map((book) => (
+                <tr
+                  key={book._id}
+                  className="hover:bg-white/5 transition"
+                >
+                  <td className="border border-white/10 px-4 py-2">{book.title}</td>
+                  <td className="border border-white/10 px-4 py-2">{book.author}</td>
+                  <td className="border border-white/10 px-4 py-2">{getCategoryName(book.category._id)}</td>
+                  <td className="border border-white/10 px-4 py-2">{book.isbn}</td>
+                  <td className="border border-white/10 px-4 py-2">{book.totalCopies}</td>
+                  <td className="border border-white/10 px-4 py-2 space-x-2">
+                    <button
+                      onClick={() => startEditing(book)}
+                      className="bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setDeleteModal({ show: true, id: book._id })}
+                      className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal.show && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 text-center shadow-xl">
+            <h2 className="text-lg font-semibold mb-4 text-gray-800">Confirm Deletion</h2>
+            <p className="text-gray-600 mb-6">Are you sure you want to delete this book?</p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={async () => {
+                  try {
+                    if (deleteModal.id) {
+                      await deleteBook(deleteModal.id);
+                      setBooks((prev) => prev.filter((b) => b._id !== deleteModal.id));
+                      toast.success("Book deleted");
+                    }
+                  } catch (error) {
+                    toast.error("Failed to delete book");
+                    console.error(error);
+                  } finally {
+                    setDeleteModal({ show: false, id: null });
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+              >
+                Yes, Delete
+              </button>
+              <button
+                onClick={() => setDeleteModal({ show: false, id: null })}
+                className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

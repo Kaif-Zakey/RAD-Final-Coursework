@@ -9,6 +9,8 @@ export interface Lending {
   dueDate: Date;
   returnedAt?: Date | null;
   status: LendingStatus;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const lendingSchema = new Schema<Lending>(

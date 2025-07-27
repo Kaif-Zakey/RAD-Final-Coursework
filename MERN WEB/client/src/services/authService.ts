@@ -31,6 +31,36 @@ export const logout = async (): Promise<void> => {
     console.error("Logout failed:", error);
   } finally {
     localStorage.removeItem("user"); // Remove stored user data
-    window.location.href = "/login"; // Redirect to login page
+    window.location.href = "/"; // Redirect to login page
   }
 };
+
+export const updateProfile = async (profileData: { name: string; email: string }): Promise<{ message: string; user: SignupResponse }> => {
+  const response = await apiClient.put("/auth/update-profile", profileData);
+  return response.data;
+};
+
+
+export const changePassword = async (passwordData: { currentPassword: string; newPassword: string }): Promise<{ message: string }> => {
+  const response = await apiClient.put("/auth/change-password", passwordData);
+  return response.data;
+};
+
+
+export const getCurrentUser = async (): Promise<SignupResponse> => {
+  const response = await apiClient.get("/auth/profile"); // Make sure this route exists
+  return response.data;
+};
+
+
+export const forgotPassword = async (email: string) => {
+  const response = await apiClient.post("/auth/forgot-password", { email });
+  return response.data;
+};
+
+// Example in authService.ts
+export const resetPassword = async (token: string, newPassword: string) => {
+  const response = await apiClient.post(`/auth/reset-password/${token}`, { newPassword });
+  return response.data;
+};
+

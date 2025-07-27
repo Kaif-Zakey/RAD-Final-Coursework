@@ -17,6 +17,8 @@ interface FormErrors {
 }
 
 const Login = () => {
+
+
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
@@ -37,7 +39,7 @@ const Login = () => {
 
     if (!formData.password) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
+    } else if (formData.password.length < 1) {
       newErrors.password = "Password must be at least 6 characters";
     }
 
@@ -129,7 +131,11 @@ const Login = () => {
               <p className="mt-1 text-sm text-red-400">{errors.password}</p>
             )}
           </div>
-
+            <Link to="/forget"
+            className="text-sm text-blue-400 hover:text-blue-300 font-semibold transition block text-center mt-2"
+            >
+              Forgot your password?
+            </Link>
           <button
             type="submit"
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-md shadow-md transition"

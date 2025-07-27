@@ -1,11 +1,13 @@
 import { Router } from "express";
-import { createBook, deleteBook, getBooks, getBooksById, updatedBook } from "../controllers/book.controller";
+import { createBook, deleteBook, getBooks, getBooksById, getTotalBooksCount, updatedBook } from "../controllers/book.controller";
 import { authenticateToken } from "../middlewares/authenticateToken";
 
 
 const bookRouter =Router();
 
 bookRouter.use(authenticateToken)
+bookRouter.get("/count",getTotalBooksCount);
+
 bookRouter.post("/",createBook)
 bookRouter.get("/", getBooks);
 bookRouter.delete("/:id",deleteBook);

@@ -10,10 +10,9 @@ import { getReaders } from "../services/readerService";
 import type { Lending, LendingStatus } from "../types/Lending";
 import type { Book } from "../types/Book";
 import type { Reader } from "../types/Reader";
+import Loading from "../components/PageLoading";
 
-/* ------------------------------------------------------------------
-   Date Helpers (unchanged logic)
-------------------------------------------------------------------- */
+
 function toDateInputValue(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   if (Number.isNaN(d.getTime())) return "";
@@ -41,9 +40,6 @@ function addDays(base: Date, days: number): Date {
   return d;
 }
 
-/* ------------------------------------------------------------------
-   Status Helpers (unchanged logic)
-------------------------------------------------------------------- */
 function deriveStatus(l: Lending): LendingStatus {
   if (l.status) return l.status; // trust server if provided
   if (l.returnedAt) return "RETURNED";
@@ -244,9 +240,7 @@ const LendingPage: React.FC = () => {
   --------------------------------------------------------------- */
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
-        <p className="animate-pulse text-white/70">Loading lending data...</p>
-      </main>
+  <Loading/>
     );
   }
 

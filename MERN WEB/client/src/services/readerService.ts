@@ -31,3 +31,10 @@ export const deleteReader = async (id: string): Promise<{ message: string }> => 
   const { data } = await apiClient.delete<{ message: string }>(`/readers/${id}`);
   return data;
 };
+
+
+// get total readers count
+export const getTotalReaders = async (): Promise<number> => {
+  const { data } = await apiClient.get("/readers/count");
+  return data;
+};

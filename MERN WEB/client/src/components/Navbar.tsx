@@ -5,6 +5,7 @@ import { logout } from "../services/authService.ts";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { MdLibraryBooks } from "react-icons/md";
+import Loading from "./PageLoading.tsx";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,7 +22,7 @@ const Navbar = () => {
       await logout();
       toast.success("Logout successful!");
       unauthenticate();
-      navigate("/login");
+      navigate("/");
     } catch (error) {
       if (axios.isAxiosError(error)) {
         toast.error(error.message);
@@ -130,7 +131,7 @@ const Navbar = () => {
                     onClick={handleLogout}
                     className="block w-full text-left bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-base font-medium"
                   >
-                    {isLoading ? "Logging out..." : "Logout"}
+                    {isLoading ? <><Loading/></> : "logout"}
                   </button>
                 </>
               )}

@@ -7,6 +7,8 @@ type Book = {
   totalCopies: number;       
   availableCopies: number;    
   category: mongoose.Types.ObjectId;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 

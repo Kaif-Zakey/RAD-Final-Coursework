@@ -4,8 +4,8 @@ type User = {
     name : string
     email : string
     password : string
-    passwordResetToken?: string
-    passwordResetExpires?: Date
+    resetToken? : string | null
+    resetTokenExpiry? : Date | null
 }
 
 const userSchema = new mongoose.Schema<User>({
@@ -29,13 +29,13 @@ const userSchema = new mongoose.Schema<User>({
         required: [true, "Password is required"],
         minlength: [6, "Password must be at least 6 characters long"]
     },
-    passwordResetToken: {
+    resetToken: {
         type: String,
-        select: false
+        default: null
     },
-    passwordResetExpires: {
+    resetTokenExpiry: {
         type: Date,
-        select: false
+        default: null
     }
 },{timestamps:true})
 

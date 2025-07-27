@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { BookModel } from "../models/Book";
 import { ReaderModel } from "../models/Reader";
 import { LendingModel } from "../models/Lending";
+import { logAudit } from "../utils/AuditLogger";
 
 
 export const lendBook = async (req: Request, res: Response) => {
@@ -38,6 +39,16 @@ export const lendBook = async (req: Request, res: Response) => {
     await book.save();
 
     res.status(201).json(await lending.populate(["book", "reader"]));
+
+    // Audit log for lending
+    await logAudit({
+      req,
+      action: "LEND",
+      entity: "Lending Record",
+      entityId: lending._id.toString(),
+      description: `Lent book "${book.title}" to reader "${reader.name}" for ${loanDays} days.`,
+    });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error lending book", error });
@@ -73,6 +84,15 @@ export const returnBook = async (req: Request, res: Response) => {
     }
 
     res.json(await lending.populate(["book", "reader"]));
+
+    // Audit log for returning
+    await logAudit({
+      req,
+      action: "RETURN",
+      entity: "Lending Record",
+      entityId: lending._id.toString(),
+      description: `Returned book "${book?.title}" from reader "${lending.reader}".`,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error returning book", error });
@@ -135,5 +155,73 @@ export const getOverdueLendings = async (_req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error fetching overdue records", error });
+  }
+};
+
+// get total lendings count
+export const getTotalLendingsCount = async (_req: Request, res: Response) => {
+  try {
+    const count = await LendingModel.countDocuments();
+    res.json( count );
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching total lendings count", error });
+  }
+};
+
+
+// get total overdue count
+export const getTotalOverdueCount = async (_req: Request, res: Response) =>
+{
+  try {
+    const now = new Date();
+    const count = await LendingModel.countDocuments({
+      status: { $in: ["BORROWED", "OVERDUE"] },
+      dueDate: { $lt: now },
+    });
+    res.json( count );
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching total overdue count", error });
+  }
+};
+
+
+// monthly lending
+
+export const getMonthlyLendings = async (_req: Request, res: Response) => {
+  try {
+    const monthlyLendings = await LendingModel.aggregate([
+      {
+        $match: {
+          borrowedAt: { $exists: true }
+        }
+      },
+      {
+        $group: {
+          _id: { $month: "$borrowedAt" },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { "_id": 1 }
+      }
+    ]);
+
+    // Map the month number to month name if you want:
+    const monthNames = [
+      "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+
+    const result = monthlyLendings.map(({ _id, count }) => ({
+      month: monthNames[_id] || _id,
+      count
+    }));
+
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching monthly lending data", error });
   }
 };

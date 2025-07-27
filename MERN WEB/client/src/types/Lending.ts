@@ -11,6 +11,7 @@ export interface BookRef {
 export interface ReaderRef {
   _id: string;
   name: string;
+  email: string; // optional, as not all readers may have an email
   // add other reader fields if needed
 }
 

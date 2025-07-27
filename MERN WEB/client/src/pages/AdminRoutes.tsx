@@ -5,7 +5,7 @@ import { useAuth } from "../context/useAuth.ts";
 const AdminRoutes = () => {
   const { isLoggedIn } = useAuth();
 
-  if (!isLoggedIn) return <Navigate to="/login" />;
+  if (!isLoggedIn) return <Navigate to="/" />;
 
   return (
     <div className="flex h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">

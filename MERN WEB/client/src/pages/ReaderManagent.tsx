@@ -7,13 +7,9 @@ import {
   getReaders,
   updateReader,
 } from "../services/readerService"
+import Loading from "../components/PageLoading"
 
-/* ------------------------------------------------------------------
-   ReaderManagement - Dark Gradient / Sidebar-Matching UI
-   NOTE: Logic, functions, and imports are unchanged per user request.
-   Only styling / structure classes updated for a cohesive look that
-   matches your modern gradient sidebar (slate → purple / indigo).
-------------------------------------------------------------------- */
+
 const ReaderManagement: React.FC = () => {
   const [readers, setReaders] = useState<Reader[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -26,15 +22,19 @@ const ReaderManagement: React.FC = () => {
   const [isAdding, setIsAdding] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterDomain, setFilterDomain] = useState("All")
+  const[loading, setLoading] = useState<boolean>(true)
 
   // Load readers
   const loadReaders = async () => {
     try {
+      setLoading(true)
       const data = await getReaders()
       setReaders(data)
     } catch (err) {
       console.error(err)
       toast.error("Failed to load readers")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -154,9 +154,7 @@ const ReaderManagement: React.FC = () => {
   const resetForm = () =>
     setFormData({ name: "", email: "", phone: "", address: "" })
 
-  /* ------------------------------------------------------------------
-     UI Helpers (style-only, no functional changes)
-  ------------------------------------------------------------------ */
+ 
   const inputBase =
     "w-full rounded-md px-3 py-2 text-sm bg-slate-800/60 text-slate-100 placeholder-slate-400 border border-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition"
 
@@ -167,6 +165,15 @@ const ReaderManagement: React.FC = () => {
   const btnGreen = `${btnBase} bg-gradient-to-r from-emerald-600 to-green-600 text-white hover:from-emerald-500 hover:to-green-500 focus:ring-emerald-400`
   const btnGray = `${btnBase} bg-slate-600 text-white hover:bg-slate-500 focus:ring-slate-400`
   const btnRed = `${btnBase} bg-gradient-to-r from-rose-600 to-red-600 text-white hover:from-rose-500 hover:to-red-500 focus:ring-rose-400`
+
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loading />
+      </div>
+    )
+  }
 
   return (
     <div className="relative max-w-7xl mx-auto p-6 sm:p-8 md:p-10 rounded-xl overflow-hidden text-white bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 shadow-2xl shadow-indigo-900/20">

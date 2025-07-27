@@ -36,3 +36,26 @@ export const getOverdueLendings = async (): Promise<Lending[]> => {
   const { data } = await apiClient.get("/lendings/overdue");
   return data;
 };
+
+//get total lendings count
+export const getTotalLendingsCount = async (): Promise<number> => {
+  const { data } = await apiClient.get("/lendings/count");
+  return data;
+}
+
+//get Total overdue count
+export const getTotalOverdueCount = async (): Promise<number> => {
+  const { data } = await apiClient.get("/lendings/overdue/count");
+  return data;
+}
+
+
+export interface MonthlyLending {
+  month: string;
+  count: number;
+}
+
+export const getMonthlyLendings = async (): Promise<MonthlyLending[]> => {
+  const { data } = await apiClient.get("/lendings/monthly");
+  return data;
+};

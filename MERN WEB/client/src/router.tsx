@@ -9,6 +9,10 @@ import BookManagement from "./pages/BookMangement"
 import LendingManagement from "./pages/LendingManage"
 import OverdueManagement from "./pages/OverDueManage"
 import CategoryManagement from "./pages/CategoryManage"
+import WelcomePage from "./pages/WelcomePage"
+import ProfileManage from "./pages/ProfileManage"
+import ForgotPassword from "./pages/ForgetPassword"
+import AuditLogsPage from "./pages/AuditLogsPage"
 
 
 const router = createBrowserRouter([
@@ -16,9 +20,10 @@ const router = createBrowserRouter([
     path: "/",
     element: <Layout />,
     children: [
-      { path: "/", element: <Login /> },
+      { path: "/", element: <WelcomePage/> },
       { path: "/login", element: <Login /> },
       { path: "/signup", element: <Signup /> },
+      { path: "/forget", element: <ForgotPassword /> },
       {
         element: <AdminRoutes />,
         children: [
@@ -28,7 +33,8 @@ const router = createBrowserRouter([
           {path: "/dashboard/lendings", element: <LendingManagement/>},
           {path: "/dashboard/overdues", element: <OverdueManagement/>},
           {path: "/dashboard/categories", element: <CategoryManagement/>},
-
+          {path: "/dashboard/profile", element: <ProfileManage/>},
+          {path: "/dashboard/audit", element: <AuditLogsPage/>}, 
           
         ],
       },

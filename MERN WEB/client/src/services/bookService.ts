@@ -26,3 +26,10 @@ export const updateBook = async (
 export const deleteBook = async (id: string): Promise<void> => {
   await apiClient.delete(`/books/${id}`);
 };
+
+
+
+export const getTotalBooksCount = async (): Promise<number> => {
+  const response = await apiClient.get("/books/count");
+  return response.data;
+};

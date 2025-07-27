@@ -1,11 +1,12 @@
 import { Outlet } from "react-router-dom"
 import Navbar from "../components/Navbar.tsx"
 import {useAuth} from "../context/useAuth.ts";
+import LoadingAnimation from "../components/Loading.tsx";
 
 const Layout = () => {
     const {isAuthenticating} = useAuth()
 
-    if(isAuthenticating) return <div>Loading...</div>
+    if(isAuthenticating) return <><LoadingAnimation/> </>
 
   return (
     <div className='h-screen'>

@@ -20,8 +20,11 @@ export const AuthProvider = ({children}: AuthProviderProps) => {
         setAccessToken(token)
     }
 
-    const logout = () => setIsLoggedIn(false);
-
+    const logout = () => {
+        setIsLoggedIn(false);
+        setAccessToken("")
+        router.navigate("/login")
+    }
     useEffect(()=>{
         setHeader(accessToken)
     },[accessToken])

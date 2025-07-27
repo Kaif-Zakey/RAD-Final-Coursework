@@ -7,9 +7,11 @@ import {
   updateCategory,
   deleteCategory,
 } from "../services/categoryService";
+import Loading from "../components/PageLoading";
 
 const CategoryManagement: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
+  const[loading, setLoading] = useState<boolean>(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<CategoryFormData>({
     name: "",
@@ -20,11 +22,14 @@ const CategoryManagement: React.FC = () => {
 
   const loadCategories = async () => {
     try {
+      setLoading(true);
       const data = await getCategories();
       setCategories(data);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load categories");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -97,6 +102,11 @@ const CategoryManagement: React.FC = () => {
   const filteredCategories = categories.filter((cat) =>
     cat.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  if (loading) {
+    return (
+      <Loading/>
+    )
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white rounded-2xl shadow-lg mt-8">
