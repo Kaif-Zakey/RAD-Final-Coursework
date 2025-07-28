@@ -170,7 +170,7 @@ Book-Club-Library/
 
 ### 🔗 Postman Collection
 Import the Postman collection for complete API documentation:
-- **File**: [`postman/Book-Club-API.json`](server/Book_Club_Library.postman_collection.json)
+- **File**: [`postman/Book-Club-API.json`](https://github.com/Kaif-Zakey/RAD-Final-Coursework/blob/main/server/Book_Club_Library.postman_collection.json)
 - **Base URL**: `http://localhost:3000/api`
 
 ### 🛣️ Main API Endpoints
